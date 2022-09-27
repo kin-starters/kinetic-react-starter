@@ -1,20 +1,12 @@
-import { Anchor, AppShell, Container, Footer, Group, Header, Text } from '@mantine/core'
+import { Anchor, AppShell, Container, Footer, Group, Header, Image, Text } from '@mantine/core'
 import { ReactNode } from 'react'
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <AppShell
       header={
-        <Header
-          height={60}
-          style={{
-            padding: 16,
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            display: 'flex',
-          }}
-        >
-          <div>Kinetic React Starter</div>
+        <Header height={92} style={{ alignItems: 'center', justifyContent: 'center', display: 'flex' }}>
+          <Image src="https://avatars.githubusercontent.com/u/82999948?v=4" style={{ height: 48, width: 48 }} />
         </Header>
       }
       footer={

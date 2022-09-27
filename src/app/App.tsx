@@ -1,11 +1,17 @@
-import { MantineProvider } from '@mantine/core'
+import { MantineProvider, Stack } from '@mantine/core'
+import { AppIntro } from './intro/AppIntro'
+import { AppTutorial } from './tutorial/AppTutorial'
+
 import { AppLayout } from './ui/AppLayout'
 
 export function App() {
   return (
     <MantineProvider theme={{ colorScheme: 'dark' }} withGlobalStyles withNormalizeCSS>
       <AppLayout>
-        <h1>Hello World</h1>
+        <Stack>
+          <AppIntro />
+          <AppTutorial />
+        </Stack>
       </AppLayout>
     </MantineProvider>
   )
