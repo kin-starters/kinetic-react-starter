@@ -1,4 +1,6 @@
-import { Anchor, Button, Code, createStyles, Grid, Group, Paper, Stack, Text, Timeline } from '@mantine/core'
+import { Keypair } from '@kin-kinetic/keypair'
+import { KineticSdk } from '@kin-kinetic/sdk'
+import { Anchor, Button, Code, Group, Loader, Paper, Stack, Text, Timeline } from '@mantine/core'
 import { IconArrowBigRight, IconCheck, IconExternalLink, IconEye, IconEyeOff } from '@tabler/icons'
 import { ReactNode, useState } from 'react'
 import { NextSteps } from './AppNextSteps'
@@ -37,19 +39,52 @@ export function StepButton({ children, onClick }: { children: ReactNode; onClick
   )
 }
 
-export function AppTutorial() {
-  const [keypair, setKeypair] = useState<string | undefined>()
+export function Wait() {
+  return (
+    <Group>
+      <Loader size="sm" color="pink" />
+      <span>Please wait...</span>
+    </Group>
+  )
+}
+
+export function AppTutorial({
+  loading,
+  setLoading,
+  sdk,
+}: {
+  loading: boolean
+  setLoading: (loading: boolean) => void
+  sdk: KineticSdk
+}) {
+  const [keypair, setKeypair] = useState<Keypair | undefined>()
   const [showMnemonic, setShowMnemonic] = useState(false)
   const [createdAccount, setCreatedAccount] = useState<string | undefined>()
   const [getBalance, setBalance] = useState<string | undefined>()
   const [requestAirdrop, setRequestAirdrop] = useState<string | undefined>()
   const [makeTransfer, setMakeTransfer] = useState<string | undefined>()
   const [getTransaction, setTransaction] = useState<string | undefined>()
+  const [showTransaction, setShowTransaction] = useState<boolean>(false)
 
   const [active, setActive] = useState(0)
 
+  function ExplorerLink({ path }: { path: string }) {
+    return (
+      <Anchor color="dimmed" href={sdk.getExplorerUrl(path)} target="_blank">
+        View on Solana Explorer <IconExternalLink size={12} />
+      </Anchor>
+    )
+  }
+
   const nextStep = () => {
     setActive(active + 1)
+  }
+
+  const refreshBalance = async () => {
+    if (!keypair) return
+    setBalance(`Loading...`)
+    const balance = await sdk.getBalance({ account: keypair.publicKey })
+    setBalance(`${balance.balance}`)
   }
 
   const steps: Step[] = [
@@ -61,7 +96,7 @@ export function AppTutorial() {
         <Stack spacing={12}>
           <Text size="sm">This is your Public Key. It is the identity of your account on the Solana Blockchain.</Text>
           <Code block color="gray">
-            {keypair}
+            {keypair?.publicKey}
           </Code>
           <Text size="sm">
             Below you can find your memoized mnemonic. This is a secret phrase that can be used to recover your keypair.
@@ -76,9 +111,7 @@ export function AppTutorial() {
               {showMnemonic ? 'Hide' : 'Show'} Mnemonic
             </Button>
             <Code block color="gray">
-              {showMnemonic
-                ? 'pill tomorrow foster begin walnut borrow virtual kick shift mutual shoe scatter'
-                : '**********'}
+              {showMnemonic ? keypair?.mnemonic : '**********'}
             </Code>
           </Group>
         </Stack>
@@ -86,7 +119,7 @@ export function AppTutorial() {
       panel: (
         <StepButton
           onClick={() => {
-            const keypair = 'BobQoPqWy5cpFioy1dMTYqNH9WpC39mkAEDJWXECoJ9y'
+            const keypair = Keypair.random()
             setKeypair(keypair)
             nextStep()
           }}
@@ -101,19 +134,21 @@ export function AppTutorial() {
       done: !!createdAccount,
       result: (
         <Stack spacing={2}>
-          <Anchor color="dimmed">
-            View on Solana Explorer <IconExternalLink size={12} />
-          </Anchor>
+          <ExplorerLink path={`address/${keypair?.publicKey}`} />
         </Stack>
       ),
       panel: (
         <StepButton
-          onClick={() => {
-            setCreatedAccount('test')
+          onClick={async () => {
+            if (!keypair) return
+            setLoading(true)
+            const res = await sdk.createAccount({ owner: keypair })
+            setCreatedAccount(`${res.signature}`)
             nextStep()
+            setLoading(false)
           }}
         >
-          Create Account
+          {loading ? <Wait /> : 'Create Account'}
         </StepButton>
       ),
     },
@@ -122,18 +157,24 @@ export function AppTutorial() {
       description: 'Next you can get the balance of your account.',
       done: !!getBalance,
       result: (
-        <Code color="gray" block>
-          {getBalance}
-        </Code>
+        <Group>
+          <Button variant="outline" color="gray" size={'sm'} onClick={refreshBalance}>
+            Refresh
+          </Button>
+          <Code color="gray" block>
+            {getBalance}
+          </Code>
+        </Group>
       ),
       panel: (
         <StepButton
-          onClick={() => {
-            setBalance('0')
+          onClick={async () => {
+            await refreshBalance()
             nextStep()
+            setLoading(false)
           }}
         >
-          Next
+          {loading ? <Wait /> : 'Get Balance'}
         </StepButton>
       ),
     },
@@ -141,15 +182,27 @@ export function AppTutorial() {
       title: 'Request Airdrop',
       description: 'In this step, you will request an airdrop of Kin tokens on the Solana Devnet.',
       done: !!requestAirdrop,
-      result: <Stack></Stack>,
+      result: (
+        <Stack>
+          <Code color="gray" block>
+            {requestAirdrop}
+          </Code>
+          <ExplorerLink path={`tx/${requestAirdrop}`} />
+        </Stack>
+      ),
       panel: (
         <StepButton
-          onClick={() => {
-            setRequestAirdrop('test')
+          onClick={async () => {
+            if (!keypair || !createdAccount) return
+            setLoading(true)
+            const res = await sdk.requestAirdrop({ account: keypair.publicKey, amount: '1000' })
+            setRequestAirdrop(`${res.signature}`)
+            await refreshBalance()
             nextStep()
+            setLoading(false)
           }}
         >
-          Next
+          {loading ? <Wait /> : 'Request Airdrop'}
         </StepButton>
       ),
     },
@@ -157,15 +210,31 @@ export function AppTutorial() {
       title: 'Make Transfer',
       description: 'Now you can make a transfer of Kin tokens to another account.',
       done: !!makeTransfer,
-      result: <Stack></Stack>,
+      result: (
+        <Stack>
+          <Code color="gray" block>
+            {makeTransfer}
+          </Code>
+          <ExplorerLink path={`tx/${makeTransfer}`} />
+        </Stack>
+      ),
       panel: (
         <StepButton
-          onClick={() => {
-            setMakeTransfer('signature: BobQoPqWy5cpFioy1dMTYqNH9WpC39mkAEDJWXECoJ9y')
+          onClick={async () => {
+            if (!keypair || !createdAccount) return
+            setLoading(true)
+            const res = await sdk.makeTransfer({
+              destination: 'BobQoPqWy5cpFioy1dMTYqNH9WpC39mkAEDJWXECoJ9y',
+              amount: '500',
+              owner: keypair,
+            })
+            setMakeTransfer(`${res.signature}`)
+            await refreshBalance()
             nextStep()
+            setLoading(false)
           }}
         >
-          Next
+          {loading ? <Wait /> : 'Make Transfer'}
         </StepButton>
       ),
     },
@@ -173,15 +242,26 @@ export function AppTutorial() {
       title: 'Get Transaction',
       description: 'Retrieve a transaction by its signature.',
       done: !!getTransaction,
-      result: <Stack></Stack>,
+      result: (
+        <Stack>
+          <Button color={'gray'} variant={'outline'} onClick={() => setShowTransaction(!showTransaction)}>
+            Show Transaction
+          </Button>
+          <pre>{showTransaction ? getTransaction : ''}</pre>
+        </Stack>
+      ),
       panel: (
         <StepButton
-          onClick={() => {
-            setTransaction('test')
+          onClick={async () => {
+            if (!keypair || !makeTransfer) return
+            setLoading(true)
+            const res = await sdk.getTransaction({ signature: makeTransfer })
+            setTransaction(JSON.stringify(res, null, 2))
             nextStep()
+            setLoading(false)
           }}
         >
-          Next
+          {loading ? <Wait /> : 'Get Transaction'}
         </StepButton>
       ),
     },
