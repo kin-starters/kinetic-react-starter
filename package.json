@@ -10,6 +10,7 @@
     "@kin-kinetic/solana": "^1.0.0-rc.1",
     "@mantine/core": "^5.4.1",
     "@mantine/hooks": "^5.4.1",
+    "@mantine/prism": "^5.5.4",
     "@tabler/icons": "^1.101.0",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
@@ -27,7 +28,7 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
-    "start": "craco start",
+    "start": "PORT=4444 craco start",
     "build": "craco build",
     "test": "craco test",
     "eject": "craco eject"

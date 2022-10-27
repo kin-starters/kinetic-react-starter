@@ -1,5 +1,5 @@
 import { KineticSdk } from '@kin-kinetic/sdk'
-import { MantineProvider, Progress, Stack } from '@mantine/core'
+import { Box, MantineProvider, Progress, Stack } from '@mantine/core'
 import { useEffect, useState } from 'react'
 import { AppIntro } from './intro/AppIntro'
 import { AppTutorial } from './tutorial/AppTutorial'

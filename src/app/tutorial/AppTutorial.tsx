@@ -1,6 +1,7 @@
 import { Keypair } from '@kin-kinetic/keypair'
 import { KineticSdk } from '@kin-kinetic/sdk'
-import { Anchor, Button, Code, Group, Loader, Paper, Stack, Text, Timeline } from '@mantine/core'
+import { Anchor, Box, Button, Code, Group, Loader, Paper, Stack, Text, Timeline } from '@mantine/core'
+import { Prism } from '@mantine/prism'
 import { IconArrowBigRight, IconCheck, IconExternalLink, IconEye, IconEyeOff } from '@tabler/icons'
 import { ReactNode, useState } from 'react'
 import { NextSteps } from './AppNextSteps'
@@ -31,11 +32,26 @@ export function StepCard({
   )
 }
 
-export function StepButton({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+export function StepButton({
+  children,
+  onClick,
+  snippet,
+}: {
+  children: ReactNode
+  onClick: () => void
+  snippet?: string
+}) {
   return (
-    <Button variant="outline" color="pink" onClick={onClick}>
-      {children}
-    </Button>
+    <Box style={{ width: '100%' }}>
+      {snippet ? (
+        <Prism style={{ width: '100%', marginBottom: '20px' }} language="typescript">
+          {snippet}
+        </Prism>
+      ) : null}
+      <Button variant="outline" color="pink" onClick={onClick}>
+        {children}
+      </Button>
+    </Box>
   )
 }
 
@@ -118,6 +134,7 @@ export function AppTutorial({
       ),
       panel: (
         <StepButton
+          snippet={`const keypair = Keypair.random() `}
           onClick={() => {
             const keypair = Keypair.random()
             setKeypair(keypair)
@@ -139,6 +156,7 @@ export function AppTutorial({
       ),
       panel: (
         <StepButton
+          snippet={`const tx = await sdk.createAccount({ owner: keypair })`}
           onClick={async () => {
             if (!keypair) return
             setLoading(true)
@@ -168,6 +186,7 @@ export function AppTutorial({
       ),
       panel: (
         <StepButton
+          snippet={`const balance = await sdk.getBalance({ account: keypair.publicKey })`}
           onClick={async () => {
             await refreshBalance()
             nextStep()
@@ -192,6 +211,7 @@ export function AppTutorial({
       ),
       panel: (
         <StepButton
+          snippet={`const tx = await sdk.requestAirdrop({ account: keypair.publicKey, amount: '1000' })`}
           onClick={async () => {
             if (!keypair || !createdAccount) return
             setLoading(true)
@@ -220,6 +240,11 @@ export function AppTutorial({
       ),
       panel: (
         <StepButton
+          snippet={`const tx = await sdk.makeTransfer({
+  amount: '500',
+  destination: 'BobQoPqWy5cpFioy1dMTYqNH9WpC39mkAEDJWXECoJ9y',
+  owner: keypair,
+})`}
           onClick={async () => {
             if (!keypair || !createdAccount) return
             setLoading(true)
@@ -252,6 +277,7 @@ export function AppTutorial({
       ),
       panel: (
         <StepButton
+          snippet={`const txDetails = await sdk.getTransaction({ signature: tx.signature })`}
           onClick={async () => {
             if (!keypair || !makeTransfer) return
             setLoading(true)
