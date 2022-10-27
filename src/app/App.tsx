@@ -19,11 +19,14 @@ export function App() {
   }
 
   return (
-    <MantineProvider theme={{ colorScheme: 'dark' }} withGlobalStyles withNormalizeCSS>
+    <MantineProvider theme={{ colorScheme: 'dark', primaryColor: 'violet' }} withGlobalStyles withNormalizeCSS>
       <AppLayout>
         <Stack>
           <AppIntro />
           <AppTutorial loading={loading} setLoading={setLoading} sdk={sdk} />
+          <Box p="2" style={{ fontSize: '10px', marginTop: '300px' }}>
+            <pre>{JSON.stringify(sdk?.config, null, 2)}</pre>
+          </Box>
         </Stack>
       </AppLayout>
     </MantineProvider>

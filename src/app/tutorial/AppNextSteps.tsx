@@ -64,8 +64,6 @@ interface FeaturedSdk {
 export function NextSteps() {
   const { classes } = useStyles()
 
-  const supTitle = 'Explore our SDKs'
-  const description = 'Learn more about Kinetic and how to use it.'
   const docsUrl = (sdk: SdkType) => `https://kinetic.kin.org/docs/sdk/${sdk}`
   const starterUrl = (sdk: SdkType) => `https://github.com/kin-starters/kinetic-${sdk}-starter`
 
