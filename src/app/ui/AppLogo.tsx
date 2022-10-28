@@ -27,7 +27,7 @@ export function AppLogo(props: AppLogoProps) {
       <g id="NEW-Purple-White-Copy" stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
         <g id="kin-coin-white-on-violet">
           <circle id="Oval" fill="#7546F6" cx="200" cy="200" r="200"></circle>
-          <g id="kin-logo-white-sideicon" transform="translate(73.828125, 54.296875)" fillRule="nonzero">
+          <g transform="translate(73.828125, 54.296875)" fillRule="nonzero">
             <g id="Group">
               <polygon
                 id="Path"

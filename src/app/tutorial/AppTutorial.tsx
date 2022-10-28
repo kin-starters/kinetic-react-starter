@@ -1,66 +1,20 @@
 import { Keypair } from '@kin-kinetic/keypair'
 import { KineticSdk } from '@kin-kinetic/sdk'
-import { Anchor, Box, Button, Code, Group, Loader, Paper, Stack, Text, Timeline } from '@mantine/core'
-import { Prism } from '@mantine/prism'
-import { IconArrowBigRight, IconCheck, IconExternalLink, IconEye, IconEyeOff } from '@tabler/icons'
-import { ReactNode, useState } from 'react'
+import { Commitment } from '@kin-kinetic/solana'
+import { Anchor, Button, Code, Group, Stack, Text } from '@mantine/core'
+import { IconExternalLink, IconEye, IconEyeOff } from '@tabler/icons'
+import { useState } from 'react'
+import { useTransactionManager } from '../transactions/TransactionManagerProvider'
 import { NextSteps } from './AppNextSteps'
+import { StepButton } from './StepButton'
+import { Step, Tutorial } from './Tutorial'
+import { Wait } from './Wait'
 
-export function StepCard({
-  active,
-  description,
-  title,
-  children,
-}: {
-  active: boolean
-  description: string
-  title: string
-  children: ReactNode
-}) {
+export function ExplorerLink({ sdk, path }: { sdk: KineticSdk; path: string }) {
   return (
-    <Paper withBorder radius="md" shadow="md" style={{ borderColor: active ? 'pink' : undefined }}>
-      <Stack p="sm" style={{}} spacing={4}>
-        <Text size="md" weight={500}>
-          {title}
-        </Text>
-        <Text color="dimmed" size="xs">
-          {description}
-        </Text>
-        {children}
-      </Stack>
-    </Paper>
-  )
-}
-
-export function StepButton({
-  children,
-  onClick,
-  snippet,
-}: {
-  children: ReactNode
-  onClick: () => void
-  snippet?: string
-}) {
-  return (
-    <Box style={{ width: '100%' }}>
-      {snippet ? (
-        <Prism style={{ width: '100%', marginBottom: '20px' }} language="typescript">
-          {snippet}
-        </Prism>
-      ) : null}
-      <Button variant="outline" color="pink" onClick={onClick}>
-        {children}
-      </Button>
-    </Box>
-  )
-}
-
-export function Wait() {
-  return (
-    <Group>
-      <Loader size="sm" color="pink" />
-      <span>Please wait...</span>
-    </Group>
+    <Anchor color="dimmed" href={sdk.getExplorerUrl(path)} target="_blank">
+      View on Solana Explorer <IconExternalLink size={12} />
+    </Anchor>
   )
 }
 
@@ -73,6 +27,7 @@ export function AppTutorial({
   setLoading: (loading: boolean) => void
   sdk: KineticSdk
 }) {
+  const { addTransaction } = useTransactionManager()
   const [keypair, setKeypair] = useState<Keypair | undefined>()
   const [showMnemonic, setShowMnemonic] = useState(false)
   const [createdAccount, setCreatedAccount] = useState<string | undefined>()
@@ -83,14 +38,6 @@ export function AppTutorial({
   const [showTransaction, setShowTransaction] = useState<boolean>(false)
 
   const [active, setActive] = useState(0)
-
-  function ExplorerLink({ path }: { path: string }) {
-    return (
-      <Anchor color="dimmed" href={sdk.getExplorerUrl(path)} target="_blank">
-        View on Solana Explorer <IconExternalLink size={12} />
-      </Anchor>
-    )
-  }
 
   const nextStep = () => {
     setActive(active + 1)
@@ -151,7 +98,7 @@ export function AppTutorial({
       done: !!createdAccount,
       result: (
         <Stack spacing={2}>
-          <ExplorerLink path={`address/${keypair?.publicKey}`} />
+          <ExplorerLink sdk={sdk} path={`address/${keypair?.publicKey}`} />
         </Stack>
       ),
       panel: (
@@ -161,9 +108,12 @@ export function AppTutorial({
             if (!keypair) return
             setLoading(true)
             const res = await sdk.createAccount({ owner: keypair })
-            setCreatedAccount(`${res.signature}`)
-            nextStep()
-            setLoading(false)
+            addTransaction(`${res.signature}`, () => {
+              setCreatedAccount(`${res.signature}`)
+              nextStep()
+              setLoading(false)
+              refreshBalance()
+            })
           }}
         >
           {loading ? <Wait /> : 'Create Account'}
@@ -206,7 +156,7 @@ export function AppTutorial({
           <Code color="gray" block>
             {requestAirdrop}
           </Code>
-          <ExplorerLink path={`tx/${requestAirdrop}`} />
+          <ExplorerLink sdk={sdk} path={`tx/${requestAirdrop}`} />
         </Stack>
       ),
       panel: (
@@ -215,11 +165,17 @@ export function AppTutorial({
           onClick={async () => {
             if (!keypair || !createdAccount) return
             setLoading(true)
-            const res = await sdk.requestAirdrop({ account: keypair.publicKey, amount: '1000' })
-            setRequestAirdrop(`${res.signature}`)
-            await refreshBalance()
-            nextStep()
-            setLoading(false)
+            const res = await sdk.requestAirdrop({
+              account: keypair.publicKey,
+              amount: '1000',
+              commitment: Commitment.Confirmed,
+            })
+            addTransaction(`${res.signature}`, () => {
+              setRequestAirdrop(`${res.signature}`)
+              refreshBalance()
+              nextStep()
+              setLoading(false)
+            })
           }}
         >
           {loading ? <Wait /> : 'Request Airdrop'}
@@ -235,13 +191,13 @@ export function AppTutorial({
           <Code color="gray" block>
             {makeTransfer}
           </Code>
-          <ExplorerLink path={`tx/${makeTransfer}`} />
+          <ExplorerLink sdk={sdk} path={`tx/${makeTransfer}`} />
         </Stack>
       ),
       panel: (
         <StepButton
           snippet={`const tx = await sdk.makeTransfer({
-  amount: '500',
+  amount: '1000',
   destination: 'BobQoPqWy5cpFioy1dMTYqNH9WpC39mkAEDJWXECoJ9y',
   owner: keypair,
 })`}
@@ -250,13 +206,15 @@ export function AppTutorial({
             setLoading(true)
             const res = await sdk.makeTransfer({
               destination: 'BobQoPqWy5cpFioy1dMTYqNH9WpC39mkAEDJWXECoJ9y',
-              amount: '500',
+              amount: '1000',
               owner: keypair,
             })
-            setMakeTransfer(`${res.signature}`)
-            await refreshBalance()
-            nextStep()
-            setLoading(false)
+            addTransaction(`${res.signature}`, () => {
+              setMakeTransfer(`${res.signature}`)
+              refreshBalance()
+              nextStep()
+              setLoading(false)
+            })
           }}
         >
           {loading ? <Wait /> : 'Make Transfer'}
@@ -302,32 +260,4 @@ export function AppTutorial({
   ]
 
   return <Tutorial active={active} steps={steps} />
-}
-
-interface Step {
-  description: string
-  done: boolean
-  panel: ReactNode
-  result: ReactNode
-  title: string
-}
-
-function Tutorial({ active, steps }: { active: number; steps: Step[] }) {
-  return (
-    <Stack>
-      <Timeline active={active} bulletSize={30} color={'violet'}>
-        {steps.map(({ description, done, panel, result, title }, index) => (
-          <Timeline.Item
-            key={index}
-            color={done ? 'green' : active === index ? 'pink' : 'dimmed'}
-            bullet={done ? <IconCheck size={16} /> : <IconArrowBigRight size={16} />}
-          >
-            <StepCard active={active === index} title={title} description={description}>
-              {active === index ? <Group mt="xs">{panel}</Group> : done ? <Stack mt={4}>{result}</Stack> : null}
-            </StepCard>
-          </Timeline.Item>
-        ))}
-      </Timeline>
-    </Stack>
-  )
 }
