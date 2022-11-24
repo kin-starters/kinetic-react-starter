@@ -13,7 +13,7 @@ export function App() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    KineticSdk.setup({ endpoint: 'http://localhost:3000', environment: 'devnet', index: 1 }).then(setSdk)
+    KineticSdk.setup({ endpoint: 'https://sandbox.kinetic.host', environment: 'devnet', index: 1 }).then(setSdk)
   }, [])
 
   if (!sdk) {
