@@ -4,9 +4,9 @@
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.10.5",
-    "@kin-kinetic/keypair": "^1.0.0-rc.12",
-    "@kin-kinetic/sdk": "^1.0.0-rc.12",
-    "@kin-kinetic/solana": "^1.0.0-rc.12",
+    "@kin-kinetic/keypair": "^1.0.0-rc.14",
+    "@kin-kinetic/sdk": "^1.0.0-rc.14",
+    "@kin-kinetic/solana": "^1.0.0-rc.14",
     "@mantine/core": "^5.8.2",
     "@mantine/hooks": "^5.8.2",
     "@mantine/prism": "^5.8.2",
@@ -25,10 +25,11 @@
     "web-vitals": "^3.1.0"
   },
   "scripts": {
-    "start": "GENERATE_SOURCEMAP=false PORT=4444 react-scripts start",
     "build": "react-scripts build",
+    "eject": "react-scripts eject",
+    "start": "GENERATE_SOURCEMAP=false PORT=4444 react-scripts start",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "update": "yarn add @kin-kinetic/sdk @kin-kinetic/keypair @kin-kinetic/solana"
   },
   "eslintConfig": {
     "extends": [
