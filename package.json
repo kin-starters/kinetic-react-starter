@@ -4,9 +4,9 @@
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.10.5",
-    "@kin-kinetic/keypair": "^1.0.0-rc.14",
-    "@kin-kinetic/sdk": "^1.0.0-rc.14",
-    "@kin-kinetic/solana": "^1.0.0-rc.14",
+    "@kin-kinetic/keypair": "^1.0.0-rc.15",
+    "@kin-kinetic/sdk": "^1.0.0-rc.15",
+    "@kin-kinetic/solana": "^1.0.0-rc.15",
     "@mantine/core": "^5.8.2",
     "@mantine/hooks": "^5.8.2",
     "@mantine/prism": "^5.8.2",
